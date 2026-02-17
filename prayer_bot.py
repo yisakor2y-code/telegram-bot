@@ -6,7 +6,7 @@ ADMIN_ID = 873346173  # your telegram user id
 CHANNEL_ID = -1003604224872  # your channel id
 
 def start(update: Update, context: CallbackContext):
-    update.message.reply_text("Send your anonymous message.")
+    update.message.reply_text("Send your prayer request or testimony.")
 
 def receive_message(update: Update, context: CallbackContext):
     user_message = update.message.text
@@ -21,7 +21,7 @@ def receive_message(update: Update, context: CallbackContext):
 
     context.bot.send_message(
         chat_id=ADMIN_ID,
-        text=f"New anonymous message:\n\n{user_message}",
+        text=f"New message:\n\n{user_message}",
         reply_markup=reply_markup
     )
 
@@ -55,6 +55,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
