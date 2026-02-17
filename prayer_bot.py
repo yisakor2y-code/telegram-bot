@@ -1,85 +1,59 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import (
-    ApplicationBuilder,
-    CommandHandler,
-    MessageHandler,
-    CallbackQueryHandler,
-    ContextTypes,
-    filters,
-)
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, CallbackQueryHandler
 
-BOT_TOKEN = "8351637214:AAFjEqsushuk7Bw4UezM1bp__8BT98V0APM"
-ADMIN_ID = 873346173
-CHANNEL_ID = -1003604224872
+TOKEN = "8351637214:AAFjEqsushuk7Bw4UezM1bp__8BT98V0APM"
+ADMIN_ID = 123456789  # your telegram user id
+CHANNEL_ID = -1003604224872  # your channel id
 
+def start(update: Update, context: CallbackContext):
+    update.message.reply_text("Send your anonymous message.")
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "🕊 Welcome.\n\n"
-        "Send your story freely.\n"
-        "Your identity will remain anonymous."
-    )
+def receive_message(update: Update, context: CallbackContext):
+    user_message = update.message.text
 
-
-async def receive_story(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_text = update.message.text
-    message_id = update.message.message_id
-
-    keyboard = InlineKeyboardMarkup([
+    keyboard = [
         [
-            InlineKeyboardButton("✅ Approve", callback_data=f"approve:{message_id}"),
-            InlineKeyboardButton("❌ Cancel", callback_data=f"cancel:{message_id}")
+            InlineKeyboardButton("Approve", callback_data=f"approve|{user_message}"),
+            InlineKeyboardButton("Cancel", callback_data="cancel")
         ]
-    ])
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
 
-    # Store message globally
-    context.bot_data[message_id] = user_text
-
-    await context.bot.send_message(
+    context.bot.send_message(
         chat_id=ADMIN_ID,
-        text=f"📩 *New anonymous submission:*\n\n{user_text}",
-        reply_markup=keyboard,
-        parse_mode="Markdown"
+        text=f"New anonymous message:\n\n{user_message}",
+        reply_markup=reply_markup
     )
 
+    update.message.reply_text("Your message has been sent for approval.")
 
-async def decision_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def button(update: Update, context: CallbackContext):
     query = update.callback_query
-    await query.answer()
+    query.answer()
 
-    action, msg_id = query.data.split(":")
-    msg_id = int(msg_id)
+    data = query.data
 
-    story = context.bot_data.get(msg_id)
+    if data.startswith("approve"):
+        message = data.split("|")[1]
+        context.bot.send_message(chat_id=CHANNEL_ID, text=message)
+        query.edit_message_text("Message approved and posted.")
 
-    if not story:
-        await query.edit_message_text("⚠️ Message not found or already handled.")
-        return
-
-    if action == "approve":
-        await context.bot.send_message(
-            chat_id=CHANNEL_ID,
-            text=f"🕊 *Anonymous message:*\n\n{story}",
-            parse_mode="Markdown"
-        )
-        await query.edit_message_text("✅ Approved and posted.")
-
-    else:
-        await query.edit_message_text("❌ Message cancelled.")
-
-    del context.bot_data[msg_id]
-
+    elif data == "cancel":
+        query.edit_message_text("Message canceled.")
 
 def main():
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
+    updater = Updater(TOKEN, use_context=True)
+    dp = updater.dispatcher
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, receive_story))
-    app.add_handler(CallbackQueryHandler(decision_handler))
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, receive_message))
+    dp.add_handler(CallbackQueryHandler(button))
 
     print("Bot is running...")
-    app.run_polling()
-
+    updater.start_polling()
+    updater.idle()
 
 if __name__ == "__main__":
     main()
+
+
