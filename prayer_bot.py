@@ -3,7 +3,7 @@ pending_messages = {}
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, CallbackQueryHandler
 
-TOKEN = "YOUR_NEW_TOKEN"
+TOKEN = "8351637214:AAGFxZFbAJAXDYJhD1B112ullmL39axarOs"
 ADMIN_ID = 873346173
 CHANNEL_ID = -1003604224872
 
@@ -68,3 +68,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
