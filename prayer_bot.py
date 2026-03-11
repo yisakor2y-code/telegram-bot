@@ -1,15 +1,18 @@
-pending_message = {}
+pending_messages = {}
+
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, CallbackQueryHandler
 
-TOKEN = "8351637214:AAGSX-BEJr-4yzRd_IIiOHh1a1s-U97VEfg"
-ADMIN_ID = 873346173  # your telegram user id
-CHANNEL_ID = -1003604224872  # your channel id
+TOKEN = "YOUR_NEW_TOKEN"
+ADMIN_ID = 873346173
+CHANNEL_ID = -1003604224872
+
 
 def start(update: Update, context: CallbackContext):
     update.message.reply_text("Send your prayer request or testimony.")
 
-def receive_message(update, context):
+
+def receive_message(update: Update, context: CallbackContext):
     user_message = update.message.text
     message_id = update.message.message_id
 
@@ -30,7 +33,8 @@ def receive_message(update, context):
 
     update.message.reply_text("Your message has been sent for approval.")
 
-def button(update, context):
+
+def button(update: Update, context: CallbackContext):
     query = update.callback_query
     data = query.data
 
@@ -40,10 +44,14 @@ def button(update, context):
 
         if message:
             context.bot.send_message(chat_id=CHANNEL_ID, text=message)
+            pending_messages.pop(msg_id)
             query.edit_message_text("Message approved and posted.")
 
     elif data.startswith("cancel_"):
+        msg_id = int(data.split("_")[1])
+        pending_messages.pop(msg_id, None)
         query.edit_message_text("Message canceled.")
+
 
 def main():
     updater = Updater(TOKEN, use_context=True)
@@ -57,13 +65,6 @@ def main():
     updater.start_polling(drop_pending_updates=True)
     updater.idle()
 
+
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
