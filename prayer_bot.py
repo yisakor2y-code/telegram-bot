@@ -1,3 +1,4 @@
+pending_message = {}
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, CallbackQueryHandler
 
@@ -8,37 +9,40 @@ CHANNEL_ID = -1003604224872  # your channel id
 def start(update: Update, context: CallbackContext):
     update.message.reply_text("Send your prayer request or testimony.")
 
-def receive_message(update: Update, context: CallbackContext):
+def receive_message(update, context):
     user_message = update.message.text
+    message_id = update.message.message_id
 
-    keyboard = [
-        [
-            InlineKeyboardButton("Approve", callback_data=f"approve|{user_message}"),
-            InlineKeyboardButton("Cancel", callback_data="cancel")
-        ]
-    ]
+    pending_messages[message_id] = user_message
+
+    keyboard = [[
+        InlineKeyboardButton("Approve", callback_data=f"approve_{message_id}"),
+        InlineKeyboardButton("Cancel", callback_data=f"cancel_{message_id}")
+    ]]
+
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     context.bot.send_message(
         chat_id=ADMIN_ID,
-        text=f"New message:\n\n{user_message}",
+        text=f"New anonymous message:\n\n{user_message}",
         reply_markup=reply_markup
     )
 
     update.message.reply_text("Your message has been sent for approval.")
 
-def button(update: Update, context: CallbackContext):
+def button(update, context):
     query = update.callback_query
-    query.answer()
-
     data = query.data
 
-    if data.startswith("approve"):
-        message = data.split("|")[1]
-        context.bot.send_message(chat_id=CHANNEL_ID, text=message)
-        query.edit_message_text("Message approved and posted.")
+    if data.startswith("approve_"):
+        msg_id = int(data.split("_")[1])
+        message = pending_messages.get(msg_id)
 
-    elif data == "cancel":
+        if message:
+            context.bot.send_message(chat_id=CHANNEL_ID, text=message)
+            query.edit_message_text("Message approved and posted.")
+
+    elif data.startswith("cancel_"):
         query.edit_message_text("Message canceled.")
 
 def main():
@@ -55,6 +59,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
